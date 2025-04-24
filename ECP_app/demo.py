@@ -2,8 +2,16 @@ import pandas as pd
 import os
 from django.conf import settings
 
+# Use absolute path for CSV file
 csv_path = os.path.join(settings.BASE_DIR, 'tseamcet.csv')
-df = pd.read_csv(csv_path)
+
+# Load CSV file once when module is imported
+try:
+	df = pd.read_csv(csv_path)
+except Exception as e:
+	print(f"Error loading CSV file: {e}")
+	df = pd.DataFrame()  # Empty DataFrame as fallback
+
 def predict(rank,gender,caste,branch):
 	if branch=='None':
 		val=df[df['rank']>=rank]

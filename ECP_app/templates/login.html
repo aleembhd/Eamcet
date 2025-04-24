@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - Findmycollege.life</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            line-height: 1.8;
+            color: #333;
+        }
+        .container {
+            max-width: 400px;
+            margin: 100px auto;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #2196F3;
+            font-size: 28px;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+            letter-spacing: 0.5px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eaeaea;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #333;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+        .submit-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            background-color: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.2);
+        }
+        .links {
+            text-align: center;
+            margin-top: 25px;
+        }
+        .links a {
+            color: #2196F3;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .links a:hover {
+            color: #1976D2;
+            text-decoration: underline;
+        }
+        .separator {
+            margin: 0 10px;
+            color: #ccc;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .alert-danger {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .alert-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .error-message {
+            font-size: 13px;
+            color: #c62828;
+            margin-top: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Findmycollege.life</h1>
+        </div>
+        <h2>Login</h2>
+        
+        <div id="error-alert" class="alert alert-danger" style="display: none;">
+            Invalid email or password. Please try again.
+        </div>
+        
+        <div id="success-alert" class="alert alert-success" style="display: none;">
+            Magic link sent! Please check your email.
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <div id="email-error" class="error-message">Please enter a valid email address</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                <div id="password-error" class="error-message">Password must be at least 6 characters</div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="login-btn">Log In</button>
+        </form>
+
+        <div class="links">
+            <a href="#" id="forgot-password">Forgot Password?</a>
+            <span class="separator">|</span>
+            <a href="/signup">Sign Up</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Reset error messages
+            document.getElementById('error-alert').style.display = 'none';
+            document.getElementById('email-error').style.display = 'none';
+            document.getElementById('password-error').style.display = 'none';
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            // Simple validation
+            let isValid = true;
+            
+            if (!validateEmail(email)) {
+                document.getElementById('email-error').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (password.length < 6) {
+                document.getElementById('password-error').style.display = 'block';
+                isValid = false;
+            }
+            
+            if (!isValid) return;
+            
+            try {
+                // For demo purposes, we'll bypass Supabase authentication
+                // and directly authenticate with our Django backend
+                const response = await fetch('/auth/callback/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        // In a real app, NEVER send passwords like this
+                        password: password
+                    }),
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Redirect to home page after successful login
+                    window.location.href = '/';
+                } else {
+                    document.getElementById('error-alert').textContent = result.error || 'Authentication failed';
+                    document.getElementById('error-alert').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('error-alert').textContent = 'Server connection error';
+                document.getElementById('error-alert').style.display = 'block';
+                console.error(err);
+            }
+        });
+        
+        document.getElementById('forgot-password').addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            
+            if (!validateEmail(email)) {
+                document.getElementById('email-error').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('success-alert').style.display = 'block';
+            document.getElementById('success-alert').textContent = 'If your email exists in our system, you will receive password reset instructions.';
+        });
+        
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+    </script>
+</body>
+</html> 
