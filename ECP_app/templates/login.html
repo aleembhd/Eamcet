@@ -2,6 +2,12 @@
 <html>
 <head>
     <title>Login - Findmycollege.life</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Firebase SDK - Updated to latest version -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <!-- Custom Firebase Config -->
+    <script src="/static/js/firebase_config.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -128,6 +134,49 @@
             margin-top: 5px;
             display: none;
         }
+        /* Google Sign In Button Styles */
+        .google-btn {
+            width: 100%;
+            background-color: white;
+            color: #757575;
+            border: 1px solid #eaeaea;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .google-btn:hover {
+            background-color: #f5f5f5;
+            box-shadow: 0 1px 1px 0 rgba(0,0,0,0.14), 0 2px 1px -1px rgba(0,0,0,0.12), 0 1px 3px 0 rgba(0,0,0,0.2);
+        }
+        .google-btn img {
+            margin-right: 10px;
+            width: 24px;
+        }
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #757575;
+            font-size: 14px;
+        }
+        .or-divider::before, .or-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .or-divider::before {
+            margin-right: 10px;
+        }
+        .or-divider::after {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -144,6 +193,14 @@
         <div id="success-alert" class="alert alert-success" style="display: none;">
             Magic link sent! Please check your email.
         </div>
+
+        <!-- Google Sign In Button -->
+        <button id="google-signin" class="google-btn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+            Sign in with Google
+        </button>
+        
+        <div class="or-divider">OR</div>
 
         <form id="loginForm">
             <div class="form-group">
@@ -169,6 +226,24 @@
     </div>
 
     <script>
+        // Initialize Firebase when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFirebase();
+        });
+        
+        // Add Google Sign In event listener
+        document.getElementById('google-signin').addEventListener('click', function() {
+            // Clear any previous errors
+            document.getElementById('error-alert').style.display = 'none';
+            
+            signInWithGoogle()
+                .catch(error => {
+                    document.getElementById('error-alert').textContent = error.message || 'Google authentication failed';
+                    document.getElementById('error-alert').style.display = 'block';
+                });
+        });
+    
+        // Existing login form event listener
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -196,36 +271,17 @@
             if (!isValid) return;
             
             try {
-                // For demo purposes, we'll bypass Supabase authentication
-                // and directly authenticate with our Django backend
-                const response = await fetch('/auth/callback/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        // In a real app, NEVER send passwords like this
-                        password: password
-                    }),
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Redirect to home page after successful login
-                    window.location.href = '/';
-                } else {
-                    document.getElementById('error-alert').textContent = result.error || 'Authentication failed';
-                    document.getElementById('error-alert').style.display = 'block';
-                }
+                // Use Firebase email/password authentication
+                await signInWithEmailPassword(email, password);
+                // Success is handled by the signInWithEmailPassword function
             } catch (err) {
-                document.getElementById('error-alert').textContent = 'Server connection error';
+                document.getElementById('error-alert').textContent = err.message || 'Authentication failed';
                 document.getElementById('error-alert').style.display = 'block';
                 console.error(err);
             }
         });
         
+        // Existing forgot password logic
         document.getElementById('forgot-password').addEventListener('click', async function(e) {
             e.preventDefault();
             
@@ -236,8 +292,16 @@
                 return;
             }
             
-            document.getElementById('success-alert').style.display = 'block';
-            document.getElementById('success-alert').textContent = 'If your email exists in our system, you will receive password reset instructions.';
+            try {
+                // Use Firebase password reset
+                const message = await resetPassword(email);
+                document.getElementById('success-alert').textContent = message;
+                document.getElementById('success-alert').style.display = 'block';
+            } catch (err) {
+                document.getElementById('error-alert').textContent = err.message || 'Password reset failed';
+                document.getElementById('error-alert').style.display = 'block';
+                console.error(err);
+            }
         });
         
         function validateEmail(email) {

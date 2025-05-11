@@ -5,6 +5,7 @@ import pandas as pd
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
+from .firebase_auth import verify_firebase_token
 
 # Authentication check decorator
 def auth_required(view_func):
@@ -29,6 +30,45 @@ def auth_callback(request):
 			email = data.get('email')
 			action = data.get('action', 'login')
 			
+			# Handle Google authentication
+			if action == 'google_login':
+				token = data.get('token')
+				if not token:
+					return JsonResponse({'success': False, 'error': 'Missing authentication token'})
+				
+				# Verify the Firebase token
+				user_data = verify_firebase_token(token)
+				
+				if not user_data:
+					return JsonResponse({'success': False, 'error': 'Invalid authentication token'})
+				
+				# Store authentication in session
+				request.session['is_authenticated'] = True
+				request.session['user_email'] = user_data.get('email')
+				request.session['user_name'] = user_data.get('name', '')
+				
+				return JsonResponse({'success': True})
+			
+			# Handle Firebase email/password authentication
+			elif action == 'firebase_email_auth':
+				token = data.get('token')
+				if not token:
+					return JsonResponse({'success': False, 'error': 'Missing authentication token'})
+				
+				# Verify the Firebase token
+				user_data = verify_firebase_token(token)
+				
+				if not user_data:
+					return JsonResponse({'success': False, 'error': 'Invalid authentication token'})
+				
+				# Store authentication in session
+				request.session['is_authenticated'] = True
+				request.session['user_email'] = user_data.get('email')
+				request.session['user_name'] = user_data.get('name', '')
+				
+				return JsonResponse({'success': True})
+			
+			# Original email/password authentication (keeping for backward compatibility)
 			if not email:
 				return JsonResponse({'success': False, 'error': 'Email is required'})
 				
